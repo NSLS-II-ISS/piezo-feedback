@@ -1,0 +1,29 @@
+syntax: glob
+bin/*
+db/*
+dbd/*
+#*.o
+O.*
+as/*
+autosave/*
+.cproject
+.project
+*~
+envPaths
+pmc/*.56K
+pmc/*.LOG
+pmc/*.MAP
+pmc/*.PMA
+pmc/*.TBL
+info_positions.req
+info_settings.req
+*.swp
+
+syntax: regexp
+^pmc/.*
+
+syntax: glob
+*~
+.hgignore
+.hg/
+records.dbl
