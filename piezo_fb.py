@@ -5,7 +5,8 @@ from ophyd import (EpicsMotor, Device, Component as Cpt,
 from ophyd import (ProsilicaDetector, SingleTrigger,
                    EpicsSignalRO, ImagePlugin, StatsPlugin, ROIPlugin,
                    DeviceStatus)
-from isstools.pid import PID
+#from isstools.pid import PID
+from xas.pid import PID
 import time as ttime
 import math
 from scipy.optimize import curve_fit
@@ -73,18 +74,18 @@ while not shutter_ph.connected or not shutter_fe.connected:
 shutters = {shutter_fe.name: shutter_fe,
             shutter_ph.name: shutter_ph}
 
-piezo_kp = float(hhm.fb_pcoeff.value)
-piezo_nmeasures = int(hhm.fb_nmeasures.value)
-piezo_nlines = int(hhm.fb_nlines.value)
-piezo_center = float(hhm.fb_center.value)
-piezo_line = int(hhm.fb_line.value)
-piezo_fb_status = int(hhm.fb_status.value)
+piezo_kp = float(hhm.fb_pcoeff.get())
+piezo_nmeasures = int(hhm.fb_nmeasures.get())
+piezo_nlines = int(hhm.fb_nlines.get())
+piezo_center = float(hhm.fb_center.get())
+piezo_line = int(hhm.fb_line.get())
+piezo_fb_status = int(hhm.fb_status.get())
 
 P = 0.004 * piezo_kp
 I = 0
 D = 0
 
-pid = PID.PID(P, I, D)
+pid = PID(P, I, D)
 sampleTime = 0.00025
 pid.setSampleTime(sampleTime)
 pid.windup_guard = 3

@@ -1,6 +1,7 @@
 #!/bin/bash
-PATH=$PATH:/opt/conda/bin
-ENV_NAME="collection-17Q3.0"
+PATH=/opt/conda/bin:$PATH
+#ENV_NAME="collection-17Q3.0"
+ENV_NAME="collection-2021-1.2"
 source activate $ENV_NAME
 
-python /epics/iocs/piezo-feedback/piezo_fb.py
+python3 /epics/iocs/piezo-feedback/piezo_fb.py
