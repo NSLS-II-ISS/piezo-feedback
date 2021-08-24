@@ -5,6 +5,6 @@ exclude =
     build,
     dist,
     versioneer.py,
-    piezo-feedback/_version.py,
+    piezo_feedback/_version.py,
     docs/source/conf.py
 max-line-length = 115

@@ -37,7 +37,7 @@ setup(
     name='piezo-feedback',
     version=versioneer.get_version(),
     cmdclass=versioneer.get_cmdclass(),
-    description="ISS monochromator piezo-feedback",
+    description="ISS monochromator piezo feedback loop code",
     long_description=readme,
     author="BNL",
     author_email='dleshchev@bnl.gov',
@@ -51,7 +51,7 @@ setup(
     },
     include_package_data=True,
     package_data={
-        'piezo-feedback': [
+        'piezo_feedback': [
             # When adding files here, remember to update MANIFEST.in as well,
             # or else they will not be included in the distribution on PyPI!
             # 'path/to/data_file',

@@ -75,7 +75,7 @@ Ready to contribute? Here's how to set up `piezo-feedback` for local development
 
 5. When you're done making changes, check that your changes pass flake8 and the tests, including testing other Python versions with tox::
 
-    $ flake8 piezo-feedback tests
+    $ flake8 piezo_feedback tests
     $ python setup.py test
     $ tox
 

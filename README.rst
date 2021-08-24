@@ -9,10 +9,10 @@ piezo-feedback
         :target: https://pypi.python.org/pypi/piezo-feedback
 
 
-ISS monochromator piezo-feedback
+ISS monochromator piezo feedback loop code
 
 * Free software: 3-clause BSD license
-
+* Documentation: (COMING SOON!) https://dleshchev.github.io/piezo-feedback.
 
 Features
 --------

@@ -1,6 +1,6 @@
 [run]
 source =
-    piezo-feedback
+    piezo_feedback
 [report]
 omit =
     */python?.?/*
