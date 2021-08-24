@@ -59,14 +59,14 @@ class EPS_Shutter(Device):
     cls = Cpt(EpicsSignal, 'Cmd:Cls-Cmd')
     opn = Cpt(EpicsSignal, 'Cmd:Opn-Cmd')
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, shutter_type=None, **kwargs):
         super().__init__(*args, **kwargs)
         self.color = 'red'
+        self.shutter_type = shutter_type
 
-shutter_fe = EPS_Shutter('XF:08ID-PPS{Sh:FE}', name = 'FE Shutter')
-shutter_fe.shutter_type = 'FE'
-shutter_ph = EPS_Shutter('XF:08IDA-PPS{PSh}', name = 'PH Shutter')
-shutter_ph.shutter_type = 'PH'
+shutter_fe = EPS_Shutter('XF:08ID-PPS{Sh:FE}', name = 'FE Shutter', shutter_type = 'FE')
+shutter_ph = EPS_Shutter('XF:08IDA-PPS{PSh}', name = 'PH Shutter', hutter_type = 'PH')
+
 
 while not shutter_ph.connected or not shutter_fe.connected:
     ttime.sleep(0.1)
@@ -86,7 +86,7 @@ I = 0
 D = 0
 
 pid = PID(P, I, D)
-sampleTime = 0.00025
+sampleTime = 0.01
 pid.setSampleTime(sampleTime)
 pid.windup_guard = 3
 
