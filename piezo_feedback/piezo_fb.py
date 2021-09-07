@@ -72,7 +72,7 @@ class PiezoFeedback:
 
         def update_fb_center(value, old_value, **kwargs):
             self.center = float(value)
-            self.pid.SetPoint = self.image_size_y - self.center  # why invert???
+            self.pid.SetPoint = self.center  # why invert???
 
         def update_fb_line(value, old_value, **kwargs):
             self.line = int(value)
@@ -89,8 +89,8 @@ class PiezoFeedback:
 
 
     def read_shutter_status(self):
-        self.fe_open = self.shutters['FE Shutter'].state.get() == 0
-        self.ph_open = self.shutters['PH Shutter'].state.get() == 0
+        self.fe_open = (self.shutters['FE Shutter'].state.get() == 0)
+        self.ph_open = (self.shutters['PH Shutter'].state.get() == 0)
 
 
     def subscribe_shutter_status(self):
@@ -152,9 +152,11 @@ class PiezoFeedback:
             self.pid.update(center_rb)
             pitch_delta = self.pid.output
             pitch_current = self.hhm.pitch.user_readback.get()
+            pitch_target = pitch_current + pitch_delta
 
             try:
-                self.hhm.pitch.move(pitch_current - pitch_delta)
+                if pitch_target > 100:
+                    self.hhm.pitch.move(pitch_target)
                 self.should_print_diagnostics = True
             except:
                 if self.should_print_diagnostics:
@@ -177,11 +179,10 @@ class PiezoFeedback:
 
 
     def run(self):
-        self.go = 1
-
         while 1:
             if self.fb_status and self.shutters_open:
                 self.adjust_pitch()
+                ttime.sleep(self.pid.sample_time)
             else:
                 ttime.sleep(0.25)
 
