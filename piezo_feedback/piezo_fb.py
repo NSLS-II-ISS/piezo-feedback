@@ -1,4 +1,4 @@
-
+print('>>>> entered the script')
 from xas.pid import PID
 import time as ttime
 import numpy as np
@@ -179,22 +179,25 @@ class PiezoFeedback:
 
 
     def run(self):
+        print('>>> running the object!')
         while 1:
             if self.fb_status and self.shutters_open:
+                print('adjusted pitch')
                 self.adjust_pitch()
                 ttime.sleep(self.pid.sample_time)
             else:
+                print('fb is off or shutters closed')
                 ttime.sleep(0.25)
 
 
 
 if __name__ == "__main__":
-
+    print('>>> entered main')
     exec(open(PATH + 'mini_profile.py').read())
     exec(open(PATH + 'image_processing.py').read())
-
+    print('>>> executed aux files')
     piezo_feedback = PiezoFeedback(hhm, bpm_es, shutters, host='remote')
-
+    print('>>> instantiated the feedback object')
     piezo_feedback.run()
 
 
