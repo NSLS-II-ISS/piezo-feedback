@@ -14,12 +14,12 @@ else: # if imported as a module
 
 class PiezoFeedback:
 
-    def __init__(self, hhm, bpm_es, shutters, sample_time = 0.01, host='remote'):
+    def __init__(self, hhm, bpm_es, shutters, sample_time = 0.01, local_hostname='remote'):
 
         self.hhm = hhm
         self.bpm_es = bpm_es
         self.shutters = shutters
-        self.host = host
+        self.local_hostname = local_hostname
 
         P = 0.004 * 1
         I = 0  # 0.02
@@ -31,7 +31,7 @@ class PiezoFeedback:
         self.image_size_x = self.bpm_es.cam.array_size.array_size_x.get()
         self.image_size_y = self.bpm_es.cam.array_size.array_size_y.get()
 
-        self.go = 0
+        # self.go = 0
         self.should_print_diagnostics = True
         self.truncate_data = False
 
@@ -40,6 +40,9 @@ class PiezoFeedback:
 
         self.read_shutter_status()
         self.subscribe_shutter_status()
+
+        # self._fb_step_start = 0
+        self._hb_step_start = None
 
 
     def set_fb_parameters(self, line, center, n_lines, n_measures, pcoeff):
@@ -57,7 +60,9 @@ class PiezoFeedback:
         self.n_lines = int(self.hhm.fb_nlines.get())
         self.n_measures = int(self.hhm.fb_nmeasures.get())
         self.pid.Kp = float(0.004 * self.hhm.fb_pcoeff.get())
-        self.status = int(self.hhm.fb_status.get())
+        self.status = bool(self.hhm.fb_status.get())
+        self.host = str(self.hhm.fb_hostname.get())
+        # self.heartbeat = int(self.hhm.fb_heartbeat.get())
 
     def subscribe_fb_parameters(self):
         def update_fb_kp(value, old_value, **kwargs):
@@ -77,7 +82,10 @@ class PiezoFeedback:
             self.line = int(value)
 
         def update_fb_status(value, old_value, **kwargs):
-            self.status = int(value)
+            self.status = bool(value)
+
+        def update_host(value, old_value, **kwargs):
+            self.host = str(value)
 
         self.hhm.fb_pcoeff.subscribe(update_fb_kp)
         self.hhm.fb_nmeasures.subscribe(update_fb_nmeasures)
@@ -85,6 +93,7 @@ class PiezoFeedback:
         self.hhm.fb_center.subscribe(update_fb_center)
         self.hhm.fb_line.subscribe(update_fb_line)
         self.hhm.fb_status.subscribe(update_fb_status)
+        self.hhm.fb_hostname.subscribe(update_host)
 
 
     def read_shutter_status(self):
@@ -170,32 +179,54 @@ class PiezoFeedback:
 
 
     @property
-    def fb_status(self):
-        if self.host == 'remote':
-            return self.status
-        elif self.host == 'local':
-            return self.go
+    def feedback_on(self):
+        return self.status
+
+
+    @property
+    def local_hosting(self):
+        return (self.local_hostname == self.host)
+
+    def _start_timers(self):
+        # self._fb_step_start = ttime.time()
+        if self._hb_step_start is None:
+            self._hb_step_start = ttime.time()
+
+
+    def emit_heartbeat_signal(self, thresh=0.75):
+        elapsed_time = ttime.time() - self._hb_step_start
+        if elapsed_time > thresh:
+            if self.hhm.fb_heartbeat.get() == 0:
+                self.hhm.fb_heartbeat.put(1)
+            else:
+                self.hhm.fb_heartbeat.put(0)
+            self._hb_step_start = None
+
 
 
     def run(self):
-        print('>>> running the object!')
         while 1:
-            if self.fb_status and self.shutters_open:
-                print('adjusted pitch')
-                self.adjust_pitch()
-                ttime.sleep(self.pid.sample_time)
+            if self.local_hosting:
+                self._start_timers()
+                if self.feedback_on and self.shutters_open:
+                    self.adjust_pitch()
+                    ttime.sleep(self.pid.sample_time)
+                else:
+                    ttime.sleep(0.25)
+                self.emit_heartbeat_signal()
             else:
-                print('fb is off or shutters closed')
                 ttime.sleep(0.25)
+
+
+
+
 
 
 
 if __name__ == "__main__":
     exec(open(PATH + 'mini_profile.py').read())
     exec(open(PATH + 'image_processing.py').read())
-    print('>>> executed aux files')
-    piezo_feedback = PiezoFeedback(hhm, bpm_es, shutters, host='remote')
-    print('>>> instantiated the feedback object')
+    piezo_feedback = PiezoFeedback(hhm, bpm_es, shutters, local_hostname='remote')
     piezo_feedback.run()
 
 
