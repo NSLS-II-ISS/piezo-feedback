@@ -1,4 +1,3 @@
-print('>>>> entered the script')
 from xas.pid import PID
 import time as ttime
 import numpy as np
@@ -192,7 +191,6 @@ class PiezoFeedback:
 
 
 if __name__ == "__main__":
-    print('>>> entered main')
     exec(open(PATH + 'mini_profile.py').read())
     exec(open(PATH + 'image_processing.py').read())
     print('>>> executed aux files')
