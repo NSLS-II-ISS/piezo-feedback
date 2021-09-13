@@ -1,6 +1,7 @@
 
 import numpy as np
 from scipy.optimize import curve_fit
+import time as ttime
 
 def gauss(x, *p):
     A, mu, sigma = p
@@ -50,9 +51,9 @@ def analyze_image(image,
             return coeff[1]
         except:
             if should_print_diagnostics:
-                print('>>>> FEEDBACK - failed - Fitting failure')
+                print(f'{ttime.ctime()} >>>> FEEDBACK - failed - Fitting failure')
             return None
     else:
         if should_print_diagnostics:
-            print('>>>> FEEDBACK - failed - image is either empty or saturated')
+            print(f'{ttime.ctime()} >>>> FEEDBACK - failed - image is either empty or saturated')
         return None

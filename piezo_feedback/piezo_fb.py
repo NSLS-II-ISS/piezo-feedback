@@ -45,13 +45,14 @@ class PiezoFeedback:
         self._hb_step_start = None
 
 
-    def set_fb_parameters(self, line, center, n_lines, n_measures, pcoeff):
-        self.hhm.fb_line.put(line)
+    def set_fb_parameters(self, center, line, n_lines, n_measures, pcoeff, host):
         self.hhm.fb_center.put(center)
+        self.hhm.fb_line.put(line)
         self.hhm.fb_nlines.put(n_lines)
         self.hhm.fb_nmeasures.put(n_measures)
         self.hhm.fb_pcoeff.put(pcoeff)
-        # self.read_piezo_analysis_parameters()
+        self.hhm.fb_hostname.put(host)
+
 
     def read_fb_parameters(self):
         self.line = int(self.hhm.fb_line.get())
@@ -59,13 +60,17 @@ class PiezoFeedback:
         self.pid.SetPoint = self.center
         self.n_lines = int(self.hhm.fb_nlines.get())
         self.n_measures = int(self.hhm.fb_nmeasures.get())
-        self.pid.Kp = float(0.004 * self.hhm.fb_pcoeff.get())
+        self.pcoeff = self.hhm.fb_pcoeff.get()
+        self.pid.Kp = float(0.004 * self.pcoeff)
         self.status = bool(self.hhm.fb_status.get())
         self.host = str(self.hhm.fb_hostname.get())
-        # self.heartbeat = int(self.hhm.fb_heartbeat.get())
+
+    def current_fb_parameters(self):
+        return (self.center, self.line, self.n_lines, self.n_measures, self.pcoeff, self.host)
 
     def subscribe_fb_parameters(self):
         def update_fb_kp(value, old_value, **kwargs):
+            self.pcoeff = float(value)
             self.pid.Kp = 0.004 * float(value)
 
         def update_fb_nmeasures(value, old_value, **kwargs):
@@ -76,7 +81,7 @@ class PiezoFeedback:
 
         def update_fb_center(value, old_value, **kwargs):
             self.center = float(value)
-            self.pid.SetPoint = self.center  # why invert???
+            self.pid.SetPoint = self.center
 
         def update_fb_line(value, old_value, **kwargs):
             self.line = int(value)
@@ -94,6 +99,10 @@ class PiezoFeedback:
         self.hhm.fb_line.subscribe(update_fb_line)
         self.hhm.fb_status.subscribe(update_fb_status)
         self.hhm.fb_hostname.subscribe(update_host)
+
+    def tweak_fb_center(self, shift=1):
+        cur_value = self.center
+        self.hhm.fb_center.put(cur_value + shift)
 
 
     def read_shutter_status(self):
@@ -123,7 +132,7 @@ class PiezoFeedback:
             image = self.bpm_es.image.array_data.read()['bpm_es_image_array_data']['value'].reshape((960,1280))
             image = image.astype(np.int16)
         except Exception as e:
-            print(f"Exception: {e}\nPlease, check the max retries value in the piezo feedback IOC or maybe the network load (too many cameras).")
+            print(f'{ttime.ctime()} Exception: {e}\nPlease, check the max retries value in the piezo feedback IOC or maybe the network load (too many cameras).')
             image = None
 
         return image
@@ -154,8 +163,9 @@ class PiezoFeedback:
 
 
     def adjust_pitch(self):
+        # print('attempting to adjust pitch', end= ' ... ')
         center_rb = self.find_beam_position()
-
+        adjustment_success = False
         if center_rb is not None:
             self.pid.update(center_rb)
             pitch_delta = self.pid.output
@@ -166,11 +176,16 @@ class PiezoFeedback:
                 if pitch_target > 100:
                     self.hhm.pitch.move(pitch_target)
                 self.should_print_diagnostics = True
+                adjustment_success = True
+                # print(f'success, target pitch {pitch_target}')
             except:
                 if self.should_print_diagnostics:
                     self.should_print_diagnostics = False
+                # print('failure')
         else:
             self.should_print_diagnostics = False
+            # print('failure')
+        return adjustment_success
 
 
     @property
@@ -209,8 +224,11 @@ class PiezoFeedback:
             if self.local_hosting:
                 self._start_timers()
                 if self.feedback_on and self.shutters_open:
-                    self.adjust_pitch()
-                    ttime.sleep(self.pid.sample_time)
+                    adjustment_success = self.adjust_pitch()
+                    if adjustment_success:
+                        ttime.sleep(self.pid.sample_time)
+                    else:
+                        ttime.sleep(0.25)
                 else:
                     ttime.sleep(0.25)
                 self.emit_heartbeat_signal()
