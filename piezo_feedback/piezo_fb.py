@@ -43,6 +43,13 @@ class PiezoFeedback:
 
         # self._fb_step_start = 0
         self._hb_step_start = None
+        #
+        # self._n_max_data = 500
+        # self._pitch_vals = np.zeros(self._n_max_data)
+        # self._centers = np.zeros(self._n_max_data)
+        # self._timestamps = np.zeros(self._n_max_data)
+        # self._idx = 0
+
 
 
     def set_fb_parameters(self, center, line, n_lines, n_measures, pcoeff, host):
@@ -177,6 +184,9 @@ class PiezoFeedback:
                     self.hhm.pitch.move(pitch_target)
                 self.should_print_diagnostics = True
                 adjustment_success = True
+
+                # self.update_deviation_data(ttime.time(), center_rb, pitch_target)
+
                 # print(f'success, target pitch {pitch_target}')
             except:
                 if self.should_print_diagnostics:
@@ -186,6 +196,24 @@ class PiezoFeedback:
             self.should_print_diagnostics = False
             # print('failure')
         return adjustment_success
+
+
+    # def update_deviation_data(self, timestamp, center, pitch):
+    #     self._timestamps = self._update_finite_array(self._timestamps, timestamp, self._idx, self._n_max_data)
+    #     self._centers = self._update_finite_array(self._centers, center, self._idx, self._n_max_data)
+    #     self._pitch_vals = self._update_finite_array(self._pitch_vals, pitch, self._idx, self._n_max_data)
+    #     if self._idx < self._n_max_data:
+    #         self._idx += 1
+    #
+    #
+    # def _update_finite_array(self, x, new_value, idx, n_max):
+    #     if idx < n_max:
+    #         x[idx] = new_value
+    #     else:
+    #         x[:-1] = x[1:]
+    #         x[-1] = new_value
+    #     return x
+
 
 
     @property
