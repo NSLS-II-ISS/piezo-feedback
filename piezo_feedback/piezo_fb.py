@@ -42,7 +42,7 @@ class PiezoFeedback:
         self.subscribe_shutter_status()
 
         # self._fb_step_start = 0
-        self._hb_step_start = None
+        self._hb_step_start = None # heartbeat timer
         #
         # self._n_max_data = 500
         # self._pitch_vals = np.zeros(self._n_max_data)
@@ -185,7 +185,7 @@ class PiezoFeedback:
                 self.should_print_diagnostics = True
                 adjustment_success = True
 
-                # self.update_deviation_data(ttime.time(), center_rb, pitch_target)
+                self.update_deviation_data(ttime.time(), center_rb, pitch_target)
 
                 # print(f'success, target pitch {pitch_target}')
             except:
