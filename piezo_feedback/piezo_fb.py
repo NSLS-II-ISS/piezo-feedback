@@ -261,7 +261,7 @@ class PiezoFeedback:
                     ttime.sleep(0.25)
                 self.emit_heartbeat_signal()
             else:
-                ttime.sleep(0.25)
+                ttime.sleep(1)
 
 
 
