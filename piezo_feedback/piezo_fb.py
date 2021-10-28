@@ -148,54 +148,59 @@ class PiezoFeedback:
     def find_beam_position(self):
         image = self.take_image()
         if image is None: return
-        beam_position = analyze_image(image,
-                                      line=self.line,
-                                      center=self.center,
-                                      n_lines=self.n_lines,
-                                      truncate_data=self.truncate_data,
-                                      should_print_diagnostics=self.should_print_diagnostics)
-        return beam_position
+        beam_position, err_msg = analyze_image(image,
+                                               line=self.line,
+                                               center=self.center,
+                                               n_lines=self.n_lines,
+                                               truncate_data=self.truncate_data)
+        return beam_position, err_msg
 
 
     def update_center(self):
         centers = []
         for i in range(self.n_measures):
-            current_position = self.find_beam_position()
+            current_position, err_msg = self.find_beam_position()
             if current_position is not None:
                 centers.append(current_position)
 
         if len(centers) > 0:
             center_av = np.mean(centers)
             self.hhm.fb_center.put(center_av) # this should automatically update the self.center and self.pid.SetPoint due to subscription
+            self.report_no_fb_error()
+        else:
+            self.report_fb_error(err_msg)
 
 
     def adjust_pitch(self):
         # print('attempting to adjust pitch', end= ' ... ')
-        center_rb = self.find_beam_position()
+        center_rb, err_msg = self.find_beam_position()
         adjustment_success = False
         if center_rb is not None:
             self.pid.update(center_rb)
             pitch_delta = self.pid.output
             pitch_current = self.hhm.pitch.user_readback.get()
             pitch_target = pitch_current + pitch_delta
-
             try:
                 if pitch_target > 100:
                     self.hhm.pitch.move(pitch_target)
                 self.should_print_diagnostics = True
                 adjustment_success = True
-
-                self.update_deviation_data(ttime.time(), center_rb, pitch_target)
-
-                # print(f'success, target pitch {pitch_target}')
+                self.report_no_fb_error()
             except:
-                if self.should_print_diagnostics:
-                    self.should_print_diagnostics = False
-                # print('failure')
+                self.should_print_diagnostics = False
+                self.report_fb_error(err_msg)
         else:
             self.should_print_diagnostics = False
-            # print('failure')
+            self.report_fb_error(err_msg)
         return adjustment_success
+
+    def report_fb_error(self, err_msg):
+        self.hhm.fb_status_err.put(1)
+        self.hhm.fb_status_msg.put(err_msg)
+
+    def report_no_fb_error(self):
+        self.hhm.fb_status_err.put(0)
+        self.hhm.fb_status_msg.put('')
 
 
     # def update_deviation_data(self, timestamp, center, pitch):

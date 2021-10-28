@@ -17,6 +17,8 @@ class HHM(Device):
     fb_pcoeff = Cpt(EpicsSignal, 'Mono:HHM-Ax:P}FB-PCoeff')
     fb_hostname = Cpt(EpicsSignal, 'Mono:HHM-Ax:P}FB-Hostname')
     fb_heartbeat = Cpt(EpicsSignal, 'Mono:HHM-Ax:P}FB-Heartbeat')
+    fb_status_err = Cpt(EpicsSignal, 'Mono:HHM-Ax:P}FB-Err')
+    fb_status_msg = Cpt(EpicsSignal, 'Mono:HHM-Ax:P}FB-StsMsg', string=True)
 
 hhm = HHM('XF:08IDA-OP{', name='hhm')
 

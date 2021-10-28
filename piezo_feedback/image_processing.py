@@ -26,7 +26,12 @@ def check_image_quality(beam_profile, n_lines):
     max_value = beam_profile.max()
     not_saturated = (max_value <= n_lines * 100)
     not_empty = (max_value >= 10) and (((max_value - min_value) / n_lines) > 5)
-    return not_saturated and not_empty
+    if not_saturated and not_empty:
+        return 'good'
+    if not_saturated:
+        return 'empty'
+    if not_empty:
+        return 'saturated'
 
 def analyze_image(image,
                   line = 420,
@@ -36,9 +41,9 @@ def analyze_image(image,
                   should_print_diagnostics=True):
 
     beam_profile = reduce_image(image, line, n_lines)
-    profile_is_good = check_image_quality(beam_profile, n_lines)
-
-    if profile_is_good:
+    image_quality = check_image_quality(beam_profile, n_lines)
+    err_msg = ''
+    if image_quality == 'good':
         try:
             npts = beam_profile.size
             x = np.arange(0, npts)[::-1]
@@ -48,12 +53,15 @@ def analyze_image(image,
                 coeff, var_matrix = curve_fit(gauss, x[idx_to_fit], beam_profile[idx_to_fit], p0=[1, center, 5])
             else:
                 coeff, var_matrix = curve_fit(gauss, x, beam_profile, p0=[1, center, 5])
-            return coeff[1]
+            err_msg = ''
+            return coeff[1], err_msg
         except:
+            err_msg = 'fitting'
             if should_print_diagnostics:
                 print(f'{ttime.ctime()} >>>> FEEDBACK - failed - Fitting failure')
-            return None
+            # return None
     else:
+        err_msg = f'image {image_quality}'
         if should_print_diagnostics:
             print(f'{ttime.ctime()} >>>> FEEDBACK - failed - image is either empty or saturated')
-        return None
+    return None, err_msg
