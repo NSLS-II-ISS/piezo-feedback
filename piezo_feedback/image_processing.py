@@ -61,7 +61,7 @@ def analyze_image(image,
                 print(f'{ttime.ctime()} >>>> FEEDBACK - failed - Fitting failure')
             # return None
     else:
-        err_msg = f'image {image_quality}'
+        err_msg = f'{image_quality} image'
         if should_print_diagnostics:
             print(f'{ttime.ctime()} >>>> FEEDBACK - failed - image is either empty or saturated')
     return None, err_msg

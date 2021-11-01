@@ -225,15 +225,21 @@ class PiezoFeedback:
     def shutters_open(self):
         return (self.fe_open and self.ph_open)
 
-
     @property
     def feedback_on(self):
         return self.status
 
-
     @property
     def local_hosting(self):
         return (self.local_hostname == self.host)
+
+    @property
+    def status_err(self):
+        return self.hhm.fb_status_err.get()
+
+    @property
+    def status_msg(self):
+        return self.hhm.fb_status_msg.get()
 
     def _start_timers(self):
         # self._fb_step_start = ttime.time()
