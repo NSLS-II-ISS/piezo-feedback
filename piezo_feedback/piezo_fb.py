@@ -237,8 +237,8 @@ class PiezoFeedback:
 
     @property
     def shutters_open(self):
-        # return (self.fe_open and self.ph_open)
-        return (self.ph_open)
+        return (self.fe_open and self.ph_open)
+        # return (self.ph_open)
 
     @property
     def feedback_on(self):
