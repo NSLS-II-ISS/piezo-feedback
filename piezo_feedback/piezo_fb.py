@@ -43,6 +43,8 @@ class PiezoFeedback:
 
         # self._fb_step_start = 0
         self._hb_step_start = None # heartbeat timer
+        self.previous_image = None
+
         #
         # self._n_max_data = 500
         # self._pitch_vals = np.zeros(self._n_max_data)
@@ -133,28 +135,40 @@ class PiezoFeedback:
         self.shutters['FE Shutter'].state.subscribe(update_fe_shutter)
         self.shutters['PH Shutter'].state.subscribe(update_ph_shutter)
 
+    def check_image(self, image):
+        err_msg = ''
+        if (self.previous_image is not None) and (self.bpm_es.acquiring):
+            if np.all(image == self.previous_image):
+                image = None
+                err_msg = 'ioc freeze'
+                self.report_fb_error(err_msg)
+                self.bpm_es.reboot_ioc()
+        if (self.previous_image is None):
+            self.previous_image = image.copy()
+        return image, err_msg
 
     def take_image(self):
         try:
             image = self.bpm_es.image.array_data.read()['bpm_es_image_array_data']['value'].reshape((960,1280))
             image = image.astype(np.int16)
+            image, err_msg = self.check_image(image)
+
         except Exception as e:
             print(f'{ttime.ctime()} Exception: {e}\nPlease, check the max retries value in the piezo feedback IOC or maybe the network load (too many cameras).')
-            image = None
-
-        return image
-
+            image, err_msg = None, 'busy network'
+        return None, err_msg
 
     def find_beam_position(self):
-        image = self.take_image()
-        if image is None: return
-        beam_position, err_msg = analyze_image(image,
-                                               line=self.line,
-                                               center=self.center,
-                                               n_lines=self.n_lines,
-                                               truncate_data=self.truncate_data)
-        return beam_position, err_msg
-
+        image, err_msg = self.take_image()
+        if image is not None:
+            beam_position, err_msg = analyze_image(image,
+                                                   line=self.line,
+                                                   center=self.center,
+                                                   n_lines=self.n_lines,
+                                                   truncate_data=self.truncate_data)
+            return beam_position, err_msg
+        else:
+            return None, err_msg
 
     def update_center(self):
         centers = []
@@ -223,7 +237,8 @@ class PiezoFeedback:
 
     @property
     def shutters_open(self):
-        return (self.fe_open and self.ph_open)
+        # return (self.fe_open and self.ph_open)
+        return (self.ph_open)
 
     @property
     def feedback_on(self):

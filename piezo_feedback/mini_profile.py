@@ -31,6 +31,7 @@ class BPM(ProsilicaDetector, SingleTrigger):
     roi1 = Cpt(ROIPlugin, 'ROI1:')
     roi2 = Cpt(ROIPlugin, 'ROI2:')
     counts = Cpt(EpicsSignal, 'Pos:Counts')
+    acquire = Cpt(EpicsSignal, 'cam1:Acquire')
     # Dan Allan guessed about the nature of these signals. Fix them if you need them.
     ins = Cpt(EpicsSignal, 'Cmd:In-Cmd')
     ret = Cpt(EpicsSignal, 'Cmd:Out-Cmd')
@@ -48,8 +49,23 @@ class BPM(ProsilicaDetector, SingleTrigger):
         super().__init__(*args, **kwargs)
         self.stage_sigs.clear()  # default stage sigs do not apply
 
-bpm_es = BPM('XF:08IDB-BI{BPM:ES}', name='bpm_es')
+    @property
+    def acquiring(self):
+        return bool(self.acquire.get())
 
+    def append_ioc_reboot_pv(self, ioc_reboot_pv):
+        self.ioc_reboot_pv = ioc_reboot_pv
+
+    def reboot_ioc(self):
+        self.ioc_reboot_pv.put(1)
+        ttime.sleep(5)
+        self.acquire.put(1)
+
+
+
+bpm_es = BPM('XF:08IDB-BI{BPM:ES}', name='bpm_es')
+bpm_es_ioc_reset = EpicsSignal('XF:08IDB-CT{IOC:BPM:ES}:SysReset', name='bpm_es_ioc_reset')
+bpm_es.append_ioc_reboot_pv(bpm_es_ioc_reset)
 
 
 class EPS_Shutter(Device):
