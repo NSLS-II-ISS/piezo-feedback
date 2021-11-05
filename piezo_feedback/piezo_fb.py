@@ -155,7 +155,7 @@ class PiezoFeedback:
 
         except Exception as e:
             print(f'{ttime.ctime()} Exception: {e}\nPlease, check the max retries value in the piezo feedback IOC or maybe the network load (too many cameras).')
-            image, err_msg = None, 'busy network'
+            image, err_msg = None, 'network'
         return None, err_msg
 
     def find_beam_position(self):
