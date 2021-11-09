@@ -113,11 +113,9 @@ class PiezoFeedback:
         cur_value = self.center
         self.hhm.fb_center.put(cur_value + shift)
 
-
     def read_shutter_status(self):
         self.fe_open = (self.shutters['FE Shutter'].state.get() == 0)
         self.ph_open = (self.shutters['PH Shutter'].state.get() == 0)
-
 
     def subscribe_shutter_status(self):
         def update_fe_shutter(value, old_value, **kwargs):
@@ -152,11 +150,10 @@ class PiezoFeedback:
             image = self.bpm_es.image.array_data.read()['bpm_es_image_array_data']['value'].reshape((960,1280))
             image = image.astype(np.int16)
             image, err_msg = self.check_image(image)
-
         except Exception as e:
             print(f'{ttime.ctime()} Exception: {e}\nPlease, check the max retries value in the piezo feedback IOC or maybe the network load (too many cameras).')
             image, err_msg = None, 'network'
-        return None, err_msg
+        return image, err_msg
 
     def find_beam_position(self):
         image, err_msg = self.take_image()
@@ -183,7 +180,6 @@ class PiezoFeedback:
             self.report_no_fb_error()
         else:
             self.report_fb_error(err_msg)
-
 
     def adjust_pitch(self):
         # print('attempting to adjust pitch', end= ' ... ')
@@ -233,8 +229,6 @@ class PiezoFeedback:
     #         x[-1] = new_value
     #     return x
 
-
-
     @property
     def shutters_open(self):
         return (self.fe_open and self.ph_open)
@@ -261,7 +255,6 @@ class PiezoFeedback:
         if self._hb_step_start is None:
             self._hb_step_start = ttime.time()
 
-
     def emit_heartbeat_signal(self, thresh=0.75):
         elapsed_time = ttime.time() - self._hb_step_start
         if elapsed_time > thresh:
@@ -270,8 +263,6 @@ class PiezoFeedback:
             else:
                 self.hhm.fb_heartbeat.put(0)
             self._hb_step_start = None
-
-
 
     def run(self):
         while 1:
