@@ -44,6 +44,7 @@ class PiezoFeedback:
         # self._fb_step_start = 0
         self._hb_step_start = None # heartbeat timer
         self.previous_image = None
+        self.previous_image_age = None
 
         #
         # self._n_max_data = 500
@@ -135,14 +136,21 @@ class PiezoFeedback:
 
     def check_image(self, image):
         err_msg = ''
-        if (self.previous_image is not None) and (self.bpm_es.acquiring):
-            if np.all(image == self.previous_image):
-                image = None
-                err_msg = 'ioc freeze'
-                self.report_fb_error(err_msg)
-                self.bpm_es.reboot_ioc()
-        if (self.previous_image is None):
+        if self.previous_image is not None:
+            now = ttime.time()
+            if ((self.bpm_es.acquiring) and
+                (np.abs(self.previous_image_age - now) > 2)): # if we don't get a new image within 2 seconds, then we are def frozen!
+                if np.all(image == self.previous_image):
+                    image = None
+                    err_msg = 'ioc freeze'
+                    self.report_fb_error(err_msg)
+                    self.bpm_es.reboot_ioc()
+                else: # if the image is not old and is new, this is time to update the previous image
+                    self.previous_image = image.copy()
+                    self.previous_image_age = ttime.ctime()
+        else:
             self.previous_image = image.copy()
+            self.previous_image_age = ttime.time()
         return image, err_msg
 
     def take_image(self):
@@ -151,7 +159,8 @@ class PiezoFeedback:
             image = image.astype(np.int16)
             image, err_msg = self.check_image(image)
         except Exception as e:
-            print(f'{ttime.ctime()} Exception: {e}\nPlease, check the max retries value in the piezo feedback IOC or maybe the network load (too many cameras).')
+            if self.should_print_diagnostics:
+                print(f'{ttime.ctime()} Exception: {e}\nPlease, check the max retries value in the piezo feedback IOC or maybe the network load (too many cameras).')
             image, err_msg = None, 'network'
         return image, err_msg
 
@@ -255,7 +264,7 @@ class PiezoFeedback:
         if self._hb_step_start is None:
             self._hb_step_start = ttime.time()
 
-    def emit_heartbeat_signal(self, thresh=0.75):
+    def emit_heartbeat_signal(self, thresh=0.5):
         elapsed_time = ttime.time() - self._hb_step_start
         if elapsed_time > thresh:
             if self.hhm.fb_heartbeat.get() == 0:
