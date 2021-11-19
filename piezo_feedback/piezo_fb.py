@@ -147,7 +147,7 @@ class PiezoFeedback:
                     self.bpm_es.reboot_ioc()
                 else: # if the image is not old and is new, this is time to update the previous image
                     self.previous_image = image.copy()
-                    self.previous_image_age = ttime.ctime()
+                    self.previous_image_age = ttime.time()
         else:
             self.previous_image = image.copy()
             self.previous_image_age = ttime.time()
@@ -171,7 +171,8 @@ class PiezoFeedback:
                                                    line=self.line,
                                                    center=self.center,
                                                    n_lines=self.n_lines,
-                                                   truncate_data=self.truncate_data)
+                                                   truncate_data=self.truncate_data,
+                                                   should_print_diagnostics=self.should_print_diagnostics)
             return beam_position, err_msg
         else:
             return None, err_msg
@@ -265,13 +266,17 @@ class PiezoFeedback:
             self._hb_step_start = ttime.time()
 
     def emit_heartbeat_signal(self, thresh=0.5):
-        elapsed_time = ttime.time() - self._hb_step_start
-        if elapsed_time > thresh:
-            if self.hhm.fb_heartbeat.get() == 0:
-                self.hhm.fb_heartbeat.put(1)
-            else:
-                self.hhm.fb_heartbeat.put(0)
-            self._hb_step_start = None
+        try:
+            elapsed_time = ttime.time() - self._hb_step_start
+            if elapsed_time > thresh:
+                if self.hhm.fb_heartbeat.get() == 0:
+                    self.hhm.fb_heartbeat.put(1)
+                else:
+                    self.hhm.fb_heartbeat.put(0)
+                self._hb_step_start = None
+        except:
+            # no heartbeat emitted is an indicator that something went wrong !
+            pass
 
     def run(self):
         while 1:
