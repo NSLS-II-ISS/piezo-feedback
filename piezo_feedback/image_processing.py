@@ -33,6 +33,22 @@ def check_image_quality(beam_profile, n_lines):
     if not_empty:
         return 'saturated'
 
+# def check_image_quality(image, line, n_lines): WIP
+#     idx_lo = int(line - np.floor(n_lines / 2))
+#     idx_hi = int(line + np.ceil(n_lines / 2))
+#     beam_profile = np.mean(image[:, idx_lo: idx_hi], axis=1)
+#     max_value = beam_profile.max()
+#     min_value = beam_profile.min()
+#
+#     not_saturated = max_value <= 150
+#     not_empty = max_value >= 7
+#     if not_saturated and not_empty:
+#         return 'good'
+#     if not_saturated:
+#         return 'empty'
+#     if not_empty:
+#         return 'saturated'
+
 def analyze_image(image,
                   line = 420,
                   center=600,
@@ -42,6 +58,8 @@ def analyze_image(image,
 
     beam_profile = reduce_image(image, line, n_lines)
     image_quality = check_image_quality(beam_profile, n_lines)
+    # image_quality = check_image_quality(image, line, n_lines)
+
     err_msg = ''
     if image_quality == 'good':
         try:
