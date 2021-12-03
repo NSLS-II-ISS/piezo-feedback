@@ -266,7 +266,7 @@ class PiezoFeedback:
         if self._hb_step_start is None:
             self._hb_step_start = ttime.time()
 
-    def emit_heartbeat_signal(self, thresh=0.5):
+    def emit_heartbeat_signal(self, thresh=0.7):
         try:
             elapsed_time = ttime.time() - self._hb_step_start
             if elapsed_time > thresh:
