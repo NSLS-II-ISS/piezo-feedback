@@ -2,7 +2,9 @@
 import numpy as np
 from scipy.optimize import curve_fit
 import time as ttime
-from .mini_profile import print_msg_now
+
+def print_msg_now(msg):
+    print(f'*({datetime.strftime(datetime.now(), "%Y-%m-%d %H:%M:%S.%f")}) {msg}')
 
 def gauss(x, *p):
     A, mu, sigma = p
