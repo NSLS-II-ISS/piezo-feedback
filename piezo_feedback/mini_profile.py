@@ -4,7 +4,8 @@ from ophyd import (EpicsMotor, Device, Component as Cpt,
 from ophyd import (ProsilicaDetector, SingleTrigger,
                    EpicsSignalRO, ImagePlugin, StatsPlugin, ROIPlugin,
                    DeviceStatus)
-
+import time as ttime
+from datetime import datetime
 
 class HHM(Device):
     pitch = Cpt(EpicsMotor, 'Mono:HHM-Ax:P}Mtr')
@@ -48,7 +49,7 @@ class BPM(ProsilicaDetector, SingleTrigger):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.stage_sigs.clear()  # default stage sigs do not apply
-        self.image_height = bpm_es.image.height.get()
+        self.image_height = self.image.height.get()
         self.frame_rate = self.cam.ps_frame_rate
 
     def adjust_camera_exposure_time(self, roi_index=1,
@@ -79,7 +80,7 @@ class BPM(ProsilicaDetector, SingleTrigger):
             ttime.sleep(5)
             self.acquire.put(1)
         else:
-            print('ioc_reboot_pv is not appended. IOC reboot impossible.')
+            print_msg_now(f'IOC reboot ophyd object is not appended. Run {self.name}.append_ioc_reboot_pv(<ioc_reboot_pv>) command before attempting to reboot IOC.')
 
     @property
     def acquiring(self):
@@ -119,3 +120,7 @@ while not shutter_ph.connected or not shutter_fe.connected:
 
 shutters = {shutter_fe.name: shutter_fe,
             shutter_ph.name: shutter_ph}
+
+def print_msg_now(msg):
+    print(f'*({datetime.strftime(datetime.now(), "%Y-%m-%d %H:%M:%S.%f")}) {msg}')
+    # print(f'*({ttime.ctime()}) {msg}')

@@ -9,7 +9,7 @@ if len(_args) > 1: # if ran as a script with PATH
 else: # if imported as a module
     PATH = ''
     from piezo_feedback.image_processing import analyze_image
-
+    from piezo_feedback.mini_profile import print_msg_now
 
 
 class PiezoFeedback:
@@ -144,6 +144,7 @@ class PiezoFeedback:
                     image = None
                     err_msg = 'ioc freeze'
                     self.report_fb_error(err_msg)
+                    print_msg_now('BPM_ES Camera freeze detected. Rebooting...')
                     self.bpm_es.reboot_ioc()
                 else: # if the image is not old and is new, this is time to update the previous image
                     self.previous_image = image.copy()
@@ -160,7 +161,7 @@ class PiezoFeedback:
             image, err_msg = self.check_image(image)
         except Exception as e:
             if self.should_print_diagnostics:
-                print(f'{ttime.ctime()} Exception: {e}\nPlease, check the max retries value in the piezo feedback IOC or maybe the network load (too many cameras).')
+                print_msg_now(f'Exception: {e}\nCheck the max retries value in the piezo feedback IOC or maybe the network load (too many cameras).')
             image, err_msg = None, 'network'
         return image, err_msg
 

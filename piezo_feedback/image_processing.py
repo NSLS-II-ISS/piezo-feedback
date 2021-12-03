@@ -2,6 +2,7 @@
 import numpy as np
 from scipy.optimize import curve_fit
 import time as ttime
+from .mini_profile import print_msg_now
 
 def gauss(x, *p):
     A, mu, sigma = p
@@ -66,20 +67,21 @@ def analyze_image(image,
             npts = beam_profile.size
             x = np.arange(0, npts)[::-1]
             center = npts - beam_profile.argmax()
+            beam_profile /= beam_profile.max()
             if truncate_data:
                 idx_to_fit = np.where(beam_profile > beam_profile.max() / 2)
-                coeff, var_matrix = curve_fit(gauss, x[idx_to_fit], beam_profile[idx_to_fit], p0=[1, center, 5])
+                coeff, var_matrix = curve_fit(gauss, x[idx_to_fit], beam_profile[idx_to_fit], p0=[1, center, 40])
             else:
-                coeff, var_matrix = curve_fit(gauss, x, beam_profile, p0=[1, center, 5])
+                coeff, var_matrix = curve_fit(gauss, x, beam_profile, p0=[1, center, 40])
             err_msg = ''
             return coeff[1], err_msg
         except:
             err_msg = 'fitting'
             if should_print_diagnostics:
-                print(f'{ttime.ctime()} >>>> FEEDBACK - failed - Fitting failure')
+                print_msg_now(f'Feedback error: fitting failure')
             # return None
     else:
         err_msg = f'{image_quality} image'
         if should_print_diagnostics:
-            print(f'{ttime.ctime()} >>>> FEEDBACK - failed - image is either empty or saturated')
+            print_msg_now(f'Feedback error: image is either empty or saturated')
     return None, err_msg
