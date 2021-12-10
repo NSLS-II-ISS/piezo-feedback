@@ -77,7 +77,7 @@ class BPM(ProsilicaDetector, SingleTrigger):
     def reboot_ioc(self):
         if self.ioc_reboot_pv is not None:
             self.ioc_reboot_pv.put(1)
-            ttime.sleep(5)
+            ttime.sleep(10)
             self.acquire.put(1)
         else:
             print_msg_now(f'IOC reboot ophyd object is not appended. Run {self.name}.append_ioc_reboot_pv(<ioc_reboot_pv>) command before attempting to reboot IOC.')
