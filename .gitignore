@@ -71,7 +71,7 @@ docs/source/generated/
 target/
 
 # Editor files
-#mac
+# mac
 .DS_Store
 *~
 .cproject
@@ -84,21 +84,20 @@ pmc/*.MAP
 pmc/*.PMA
 pmc/*.TBL
 
-
 info_positions.req
 info_settings.req
 
-#vim
+# vim
 *.swp
 *.swo
 
-#pycharm
+# pycharm
 .idea/
 
-#VSCode
+# VSCode
 .vscode/
 
-#Ipython Notebook
+# Ipython Notebook
 .ipynb_checkpoints
 
 .hgignore
