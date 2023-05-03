@@ -1,0 +1,11 @@
+default_context:
+  full_name: "BNL"
+  email: "dleshchev@bnl.gov"
+  github_username: "NSLS-II-ISS"
+  project_name: "piezo-feedback"
+  package_dist_name: "piezo-feedback"
+  package_dir_name: "piezo_feedback"
+  repo_name: "piezo-feedback"
+  project_short_description: "ISS monochromator piezo feedback loop code"
+  minimum_supported_python_version: "3.8"
+replay_dir: "~/src/NSLS-II/ISS"

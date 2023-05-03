@@ -21,4 +21,3 @@ info_settings.req
 
 syntax: regexp
 ^pmc/.*
-

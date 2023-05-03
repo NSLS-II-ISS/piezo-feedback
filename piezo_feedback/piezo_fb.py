@@ -1,28 +1,27 @@
-from xas.pid import PID
-import time as ttime
-import numpy as np
 import sys
+import time as ttime
+
+import numpy as np
+from xas.pid import PID
 
 _args = sys.argv
-if len(_args) > 1: # if ran as a script with PATH
+if len(_args) > 1:  # if ran as a script with PATH
     PATH = _args[1]
-else: # if imported as a module
-    PATH = ''
+else:  # if imported as a module
+    PATH = ""
     from piezo_feedback.image_processing import analyze_image
     from piezo_feedback.mini_profile import print_msg_now
 
 
 class PiezoFeedback:
-
-    def __init__(self, hhm, bpm_es, shutters, sample_time = 0.01, local_hostname='remote'):
-
+    def __init__(self, hhm, bpm_es, shutters, sample_time=0.01, local_hostname="remote"):
         self.hhm = hhm
         self.bpm_es = bpm_es
         self.shutters = shutters
         self.local_hostname = local_hostname
 
         P = 0.004 * 1
-        I = 0  # 0.02
+        I = 0  # 0.02  # noqa E741
         D = 0  # 0.01
         self.pid = PID(P, I, D)
         self.pid.windup_guard = 3
@@ -42,7 +41,7 @@ class PiezoFeedback:
         self.subscribe_shutter_status()
 
         # self._fb_step_start = 0
-        self._hb_step_start = None # heartbeat timer
+        self._hb_step_start = None  # heartbeat timer
         self.previous_image = None
         self.previous_image_age = None
 
@@ -53,8 +52,6 @@ class PiezoFeedback:
         # self._timestamps = np.zeros(self._n_max_data)
         # self._idx = 0
 
-
-
     def set_fb_parameters(self, center, line, n_lines, n_measures, pcoeff, host):
         self.hhm.fb_center.put(center)
         self.hhm.fb_line.put(line)
@@ -62,7 +59,6 @@ class PiezoFeedback:
         self.hhm.fb_nmeasures.put(n_measures)
         self.hhm.fb_pcoeff.put(pcoeff)
         self.hhm.fb_hostname.put(host)
-
 
     def read_fb_parameters(self):
         self.line = int(self.hhm.fb_line.get())
@@ -115,8 +111,8 @@ class PiezoFeedback:
         self.hhm.fb_center.put(cur_value + shift)
 
     def read_shutter_status(self):
-        self.fe_open = (self.shutters['FE Shutter'].state.get() == 0)
-        self.ph_open = (self.shutters['PH Shutter'].state.get() == 0)
+        self.fe_open = self.shutters["FE Shutter"].state.get() == 0
+        self.ph_open = self.shutters["PH Shutter"].state.get() == 0
 
     def subscribe_shutter_status(self):
         def update_fe_shutter(value, old_value, **kwargs):
@@ -131,22 +127,23 @@ class PiezoFeedback:
             elif value == 1 and old_value == 0:
                 self.ph_open = False
 
-        self.shutters['FE Shutter'].state.subscribe(update_fe_shutter)
-        self.shutters['PH Shutter'].state.subscribe(update_ph_shutter)
+        self.shutters["FE Shutter"].state.subscribe(update_fe_shutter)
+        self.shutters["PH Shutter"].state.subscribe(update_ph_shutter)
 
     def check_image(self, image):
-        err_msg = ''
+        err_msg = ""
         if self.previous_image is not None:
             now = ttime.time()
-            if ((self.bpm_es.acquiring) and
-                (np.abs(self.previous_image_age - now) > 2)): # if we don't get a new image within 2 seconds, then we are def frozen!
+            if (self.bpm_es.acquiring) and (
+                np.abs(self.previous_image_age - now) > 2
+            ):  # if we don't get a new image within 2 seconds, then we are def frozen!
                 if np.all(image == self.previous_image):
                     image = None
-                    err_msg = 'ioc freeze'
+                    err_msg = "ioc freeze"
                     self.report_fb_error(err_msg)
-                    print_msg_now('BPM_ES Camera freeze detected. Rebooting...')
+                    print_msg_now("BPM_ES Camera freeze detected. Rebooting...")
                     self.bpm_es.reboot_ioc()
-                else: # if the image is not old and is new, this is time to update the previous image
+                else:  # if the image is not old and is new, this is time to update the previous image
                     self.previous_image = image.copy()
                     self.previous_image_age = ttime.time()
         else:
@@ -156,24 +153,29 @@ class PiezoFeedback:
 
     def take_image(self):
         try:
-            image = self.bpm_es.image.array_data.read()['bpm_es_image_array_data']['value'].reshape((960,1280))
+            image = self.bpm_es.image.array_data.read()["bpm_es_image_array_data"]["value"].reshape((960, 1280))
             image = image.astype(np.int16)
             image, err_msg = self.check_image(image)
         except Exception as e:
             if self.should_print_diagnostics:
-                print_msg_now(f'Exception: {e}\nCheck the max retries value in the piezo feedback IOC or maybe the network load (too many cameras).')
-            image, err_msg = None, 'network'
+                print_msg_now(
+                    f"Exception: {e}\nCheck the max retries value in the piezo feedback IOC "
+                    f"or maybe the network load (too many cameras)."
+                )
+            image, err_msg = None, "network"
         return image, err_msg
 
     def find_beam_position(self):
         image, err_msg = self.take_image()
         if image is not None:
-            beam_position, err_msg = analyze_image(image,
-                                                   line=self.line,
-                                                   center=self.center,
-                                                   n_lines=self.n_lines,
-                                                   truncate_data=self.truncate_data,
-                                                   should_print_diagnostics=self.should_print_diagnostics)
+            beam_position, err_msg = analyze_image(
+                image,
+                line=self.line,
+                center=self.center,
+                n_lines=self.n_lines,
+                truncate_data=self.truncate_data,
+                should_print_diagnostics=self.should_print_diagnostics,
+            )
             return beam_position, err_msg
         else:
             return None, err_msg
@@ -187,7 +189,9 @@ class PiezoFeedback:
 
         if len(centers) > 0:
             center_av = np.mean(centers)
-            self.hhm.fb_center.put(center_av) # this should automatically update the self.center and self.pid.SetPoint due to subscription
+            self.hhm.fb_center.put(
+                center_av
+            )  # this should automatically update the self.center and self.pid.SetPoint due to subscription
             self.report_no_fb_error()
         else:
             self.report_fb_error(err_msg)
@@ -207,7 +211,7 @@ class PiezoFeedback:
                 self.should_print_diagnostics = True
                 adjustment_success = True
                 self.report_no_fb_error()
-            except:
+            except Exception:
                 self.should_print_diagnostics = False
                 self.report_fb_error(err_msg)
         else:
@@ -221,8 +225,7 @@ class PiezoFeedback:
 
     def report_no_fb_error(self):
         self.hhm.fb_status_err.put(0)
-        self.hhm.fb_status_msg.put('')
-
+        self.hhm.fb_status_msg.put("")
 
     # def update_deviation_data(self, timestamp, center, pitch):
     #     self._timestamps = self._update_finite_array(self._timestamps, timestamp, self._idx, self._n_max_data)
@@ -242,7 +245,7 @@ class PiezoFeedback:
 
     @property
     def shutters_open(self):
-        return (self.fe_open and self.ph_open)
+        return self.fe_open and self.ph_open
         # return (self.ph_open)
 
     @property
@@ -251,7 +254,7 @@ class PiezoFeedback:
 
     @property
     def local_hosting(self):
-        return (self.local_hostname == self.host)
+        return self.local_hostname == self.host
 
     @property
     def status_err(self):
@@ -275,7 +278,7 @@ class PiezoFeedback:
                 else:
                     self.hhm.fb_heartbeat.put(0)
                 self._hb_step_start = None
-        except:
+        except Exception:
             # no heartbeat emitted is an indicator that something went wrong !
             pass
 
@@ -296,16 +299,8 @@ class PiezoFeedback:
                 ttime.sleep(1)
 
 
-
-
-
-
-
 if __name__ == "__main__":
-    exec(open(PATH + 'mini_profile.py').read())
-    exec(open(PATH + 'image_processing.py').read())
-    piezo_feedback = PiezoFeedback(hhm, bpm_es, shutters, local_hostname='remote')
+    exec(open(PATH + "mini_profile.py").read())
+    exec(open(PATH + "image_processing.py").read())
+    piezo_feedback = PiezoFeedback(hhm, bpm_es, shutters, local_hostname="remote")  # noqa F821
     piezo_feedback.run()
-
-
-
